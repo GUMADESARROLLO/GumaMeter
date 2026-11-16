@@ -215,7 +215,7 @@ class MenuBandeja(QWidget):
 
     def set_sesion(self, nombre: str | None, username: str | None) -> None:
         self._con_sesion = nombre is not None
-        self.nombre.setText(nombre or "SAC Estados")
+        self.nombre.setText(nombre or "GumaMeter")
         self.usuario.setText(f"· {username}" if username else "")
         if not self._con_sesion:
             self._estado = self._desde = None
@@ -367,7 +367,7 @@ class Bandeja(QObject):
 
     def notificar(self, texto: str, aviso: bool = True) -> None:
         tipo = QSystemTrayIcon.MessageIcon.Warning if aviso else QSystemTrayIcon.MessageIcon.Information
-        self.icono.showMessage("SAC Estados", texto, tipo, 6000)
+        self.icono.showMessage("GumaMeter", texto, tipo, 6000)
 
     def mostrar_menu(self) -> None:
         self.menu.mostrar_junto_a(self.icono.geometry())
@@ -385,16 +385,16 @@ class Bandeja(QObject):
     def _pintar(self) -> None:
         if not self._con_sesion:
             self.icono.setIcon(theme.icono_bandeja(None))
-            self.icono.setToolTip("SAC Estados · Sin sesión")
+            self.icono.setToolTip("GumaMeter · Sin sesión")
         elif self._estado is None:
             self.icono.setIcon(theme.icono_bandeja("?", conectado=False))
-            self.icono.setToolTip("SAC Estados · " + ("Conectando…" if self._conectado else "Sin conexión"))
+            self.icono.setToolTip("GumaMeter · " + ("Conectando…" if self._conectado else "Sin conexión"))
         elif not self._conectado:
             self.icono.setIcon(theme.icono_bandeja(self._estado, conectado=False))
-            self.icono.setToolTip("SAC Estados · Sin conexión")
+            self.icono.setToolTip("GumaMeter · Sin conexión")
         else:
             self.icono.setIcon(theme.icono_bandeja(self._estado))
-            self.icono.setToolTip("SAC Estados · " + etiqueta_estado(self._estado))
+            self.icono.setToolTip("GumaMeter · " + etiqueta_estado(self._estado))
 
     def _al_activar(self, motivo: QSystemTrayIcon.ActivationReason) -> None:
         if motivo not in (

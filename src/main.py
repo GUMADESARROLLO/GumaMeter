@@ -1,4 +1,4 @@
-"""SAC Estados: marca el estado de trabajo del equipo SAC desde la bandeja de Windows."""
+"""GumaMeter: marca el estado de trabajo del equipo SAC desde la bandeja de Windows."""
 
 from __future__ import annotations
 
@@ -135,6 +135,7 @@ class Aplicacion(QObject):
     def __init__(self, app: QApplication, instancia: InstanciaUnica):
         super().__init__()
         self.app = app
+        settings.migrar_nombre_anterior()
         self.cfg, primera_vez = settings.Config.cargar()
         if primera_vez:
             self.cfg.guardar()
@@ -405,7 +406,7 @@ class Aplicacion(QObject):
 
     def _salir(self) -> None:
         # Salir no cambia el estado: el servidor lo resuelve por falta de señal.
-        if self.sesion and not confirmar("¿Salir de SAC Estados?", MSG_SALIR, aceptar="Salir"):
+        if self.sesion and not confirmar("¿Salir de GumaMeter?", MSG_SALIR, aceptar="Salir"):
             return
         if self._logout_en_curso:
             # Se espera (como mucho unos segundos) a que el cierre de sesión llegue al servidor.
@@ -429,7 +430,7 @@ def main() -> int:
         import ctypes
 
         # Identidad propia en la barra de tareas y en las notificaciones.
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Unimark.SACEstados")
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Unimark.GumaMeter")
 
     app = QApplication(sys.argv)
     app.setApplicationName(settings.NOMBRE_APP)

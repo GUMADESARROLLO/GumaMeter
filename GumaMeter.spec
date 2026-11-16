@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-# Genera un solo dist\SAC-Estados.exe, sin consola.  Uso: pyinstaller SAC-Estados.spec
+# Genera un solo dist\GumaMeter.exe, sin consola.  Uso: pyinstaller GumaMeter.spec
 
 a = Analysis(
     ["src/main.py"],
@@ -57,7 +57,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name="SAC-Estados",
+    name="GumaMeter",
     icon="assets/icon.ico",
     console=False,
     debug=False,

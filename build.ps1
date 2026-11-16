@@ -1,5 +1,5 @@
 <#
-  Compila SAC Estados en un solo ejecutable: dist\SAC-Estados.exe
+  Compila GumaMeter en un solo ejecutable: dist\GumaMeter.exe
 
   Uso:   .\build.ps1              crea el entorno, instala, prueba y compila
          .\build.ps1 -SinPruebas  omite pytest
@@ -46,13 +46,13 @@ if (-not $SinPruebas) {
 }
 
 # Si la app está abierta, Windows no deja reemplazar el .exe.
-Get-Process -Name "SAC-Estados" -ErrorAction SilentlyContinue | Stop-Process -Force
+Get-Process -Name "GumaMeter" -ErrorAction SilentlyContinue | Stop-Process -Force
 
 Paso "Compilar con PyInstaller" {
-    & $Py -m PyInstaller --noconfirm --clean SAC-Estados.spec
+    & $Py -m PyInstaller --noconfirm --clean GumaMeter.spec
 }
 
-$Exe = Join-Path $PSScriptRoot "dist\SAC-Estados.exe"
+$Exe = Join-Path $PSScriptRoot "dist\GumaMeter.exe"
 if (-not (Test-Path $Exe)) {
     Write-Host "ERROR: no se generó $Exe" -ForegroundColor Red
     exit 1

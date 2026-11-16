@@ -118,7 +118,7 @@ class Manejador(BaseHTTPRequestHandler):
             return None
         u = USUARIOS[username]
         if not u["sac"] or not u["activo"]:
-            self._json(403, {"mensaje": "Tu usuario no tiene acceso a SAC Estados."})
+            self._json(403, {"mensaje": "Tu usuario no tiene acceso a GumaMeter."})
             return None
         return username
 

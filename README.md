@@ -1,11 +1,11 @@
-# SAC Estados
+# GumaMeter
 
 App de bandeja de Windows para el equipo de Servicio al Cliente (SAC) de Unimark S.A.
 Sirve para una sola cosa: marcar el estado de trabajo (**En línea, AFK, Descanso, Desconectado**)
 sin abrir el navegador. La app habla con la API del sistema SAC (Laravel), que valida al
 usuario y registra cada cambio.
 
-- Windows 10/11. Un solo archivo: `SAC-Estados.exe`.
+- Windows 10/11. Un solo archivo: `GumaMeter.exe`.
 - Python 3.11+, PySide6 (Qt), httpx, keyring y PyInstaller.
 
 ## Compilar
@@ -17,7 +17,7 @@ Requisitos: Windows, PowerShell y Python 3.11 o superior (o [uv](https://docs.as
 .\build.ps1 -SinPruebas  # igual, sin pytest
 ```
 
-El resultado queda en `dist\SAC-Estados.exe` (unos 40 MB). El script se detiene en el primer paso que falle.
+El resultado queda en `dist\GumaMeter.exe` (unos 40 MB). El script se detiene en el primer paso que falle.
 
 Si PowerShell bloquea el script: `powershell -ExecutionPolicy Bypass -File .\build.ps1`.
 
@@ -55,7 +55,7 @@ Pruebas automáticas: `.\.venv\Scripts\python.exe -m pytest`
 La dirección se escribe **sin** `/api/sac`; la app lo agrega. Por defecto es `http://sac.umk.local`.
 
 - **Desde la app:** clic en el ícono de la bandeja → **Configuración** (también hay un enlace en la ventana de inicio de sesión).
-- **A mano o por script**, antes del primer uso: crear `%APPDATA%\SAC Estados\config.json`:
+- **A mano o por script**, antes del primer uso: crear `%APPDATA%\GumaMeter\config.json`:
 
   ```json
   {
@@ -71,9 +71,9 @@ Si se cambia el servidor con una sesión abierta, la app cierra esa sesión y pi
 
 ## Instalar en cada máquina
 
-1. Copiar `SAC-Estados.exe` a una carpeta fija del equipo, por ejemplo `C:\SAC\SAC-Estados.exe`. No necesita instalador ni permisos de administrador.
+1. Copiar `GumaMeter.exe` a una carpeta fija del equipo, por ejemplo `C:\GumaMeter\GumaMeter.exe`. No necesita instalador ni permisos de administrador.
 2. Abrirlo e iniciar sesión con el usuario y la contraseña del sistema SAC. Solo entran usuarios con rol SAC.
-3. Listo. Queda junto al reloj y **arranca solo con Windows** (clave `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, valor `SAC Estados`). Se puede apagar con el interruptor "Iniciar con Windows" del menú.
+3. Listo. Queda junto al reloj y **arranca solo con Windows** (clave `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, valor `GumaMeter`). Se puede apagar con el interruptor "Iniciar con Windows" del menú.
 
 Notas:
 
@@ -82,12 +82,15 @@ Notas:
 - El `.exe` no está firmado: SmartScreen puede avisar la primera vez ("Más información" → "Ejecutar de todas formas").
 - Abrirlo dos veces no crea dos copias: la segunda solo muestra el menú de la primera.
 - Para actualizar: salir de la app, reemplazar el `.exe` y abrirlo.
-- Para desinstalar: apagar "Iniciar con Windows", salir y borrar el `.exe` y la carpeta `%APPDATA%\SAC Estados`.
+- Para desinstalar: apagar "Iniciar con Windows", salir y borrar el `.exe` y la carpeta `%APPDATA%\GumaMeter`.
+- Si el equipo tenía la versión anterior (**SAC Estados**): cerrar esa app y borrar su `SAC-Estados.exe`. Al abrir
+  GumaMeter por primera vez se traen solos el servidor configurado y la sesión, y se quita la entrada vieja de
+  inicio con Windows. La carpeta `%APPDATA%\SAC Estados` queda sin uso y se puede borrar.
 
 ## Cómo se usa
 
 Clic (izquierdo o derecho) en el ícono → se abre el menú con el nombre del usuario y los cuatro estados.
-El punto de color del ícono y el texto al pasar el mouse ("SAC Estados · En línea") muestran el estado vigente.
+El punto de color del ícono y el texto al pasar el mouse ("GumaMeter · En línea") muestran el estado vigente.
 
 | Estado | Significado |
 |---|---|
@@ -158,8 +161,8 @@ Los umbrales están en `src/uso.py` (`PASO`, `UMBRAL_INACTIVO`, `TOPE`).
 
 | Dato | Lugar |
 |---|---|
-| Token de sesión | Administrador de credenciales de Windows → Credenciales de Windows → `SAC Estados`. Nunca en texto plano. |
-| URL del servidor e "Iniciar con Windows" | `%APPDATA%\SAC Estados\config.json` |
+| Token de sesión | Administrador de credenciales de Windows → Credenciales de Windows → `GumaMeter`. Nunca en texto plano. |
+| URL del servidor e "Iniciar con Windows" | `%APPDATA%\GumaMeter\config.json` |
 | Inicio con Windows | `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` |
 
 La contraseña no se guarda en ningún lado.
@@ -208,7 +211,7 @@ tools/
   mock_api.py         servidor simulado
   make_icon.py        favicon-20.png -> icon.ico (16, 24, 32, 48, 256)
 tests/                pytest: cliente de la API, lógica del estado y servidor simulado
-SAC-Estados.spec      receta de PyInstaller
+GumaMeter.spec      receta de PyInstaller
 build.ps1             compilación completa
 ```
 

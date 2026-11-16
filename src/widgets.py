@@ -164,7 +164,7 @@ def _preparar_dialogo(dlg: QDialog, titulo: str) -> None:
 def confirmar(titulo: str, mensaje: str, aceptar: str, cancelar: str = "Cancelar") -> bool:
     """Diálogo de confirmación con el estilo de la app. El foco inicial va en Cancelar."""
     dlg = QDialog()
-    _preparar_dialogo(dlg, "SAC Estados")
+    _preparar_dialogo(dlg, "GumaMeter")
     dlg.setFixedWidth(380)
 
     caja = QVBoxLayout(dlg)
@@ -199,7 +199,7 @@ class DialogoConfiguracion(QDialog):
 
     def __init__(self, servidor: str, iniciar_con_windows: bool, parent: QWidget | None = None):
         super().__init__(parent)
-        _preparar_dialogo(self, "Configuración · SAC Estados")
+        _preparar_dialogo(self, "Configuración · GumaMeter")
         self.setFixedWidth(430)
 
         caja = QVBoxLayout(self)

@@ -17,7 +17,7 @@ def _nombre_canal() -> str:
         usuario = getpass.getuser()
     except Exception:
         usuario = "usuario"
-    return f"SAC-Estados-{usuario}"
+    return f"GumaMeter-{usuario}"
 
 
 class InstanciaUnica(QObject):

@@ -83,7 +83,7 @@ class Sesion:
 
 _MENSAJES = {
     401: "Usuario o contraseña incorrectos.",
-    403: "Tu usuario no tiene acceso a SAC Estados.",
+    403: "Tu usuario no tiene acceso a GumaMeter.",
     422: "El estado no es válido.",
     429: "Demasiados intentos. Espera un momento y vuelve a intentar.",
 }

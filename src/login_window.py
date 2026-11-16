@@ -16,7 +16,7 @@ class VentanaLogin(QWidget):
     def __init__(self):
         super().__init__()
         self.setObjectName("ventana")
-        self.setWindowTitle("SAC Estados")
+        self.setWindowTitle("GumaMeter")
         self.setWindowIcon(theme.icono_app())
         self.setWindowFlags(
             Qt.WindowType.Window

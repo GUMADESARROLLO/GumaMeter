@@ -1,6 +1,6 @@
 """Preferencias y sesión guardada.
 
-- Preferencias (URL del servidor, iniciar con Windows): ``%APPDATA%\\SAC Estados\\config.json``.
+- Preferencias (URL del servidor, iniciar con Windows): ``%APPDATA%\\GumaMeter\\config.json``.
 - Token: Administrador de credenciales de Windows (``keyring``). Nunca en texto plano.
 """
 
@@ -12,16 +12,18 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-NOMBRE_APP = "SAC Estados"
+NOMBRE_APP = "GumaMeter"
 SERVIDOR_POR_DEFECTO = "http://sac.umk.local"
+
+NOMBRE_ANTERIOR = "SAC Estados"  # así se llamaba la app; ver migrar_nombre_anterior()
 
 _SERVICIO = NOMBRE_APP
 _CUENTA = "sesion"
 
 
 def carpeta_config() -> Path:
-    # SAC_ESTADOS_CONFIG permite aislar las pruebas y las ejecuciones de desarrollo.
-    forzada = os.environ.get("SAC_ESTADOS_CONFIG")
+    # GUMAMETER_CONFIG permite aislar las pruebas y las ejecuciones de desarrollo.
+    forzada = os.environ.get("GUMAMETER_CONFIG")
     if forzada:
         return Path(forzada)
     base = os.environ.get("APPDATA") or str(Path.home())
@@ -65,6 +67,32 @@ class Config:
         temporal = ruta.with_suffix(".tmp")
         temporal.write_text(json.dumps(asdict(self), indent=2, ensure_ascii=False), encoding="utf-8")
         temporal.replace(ruta)
+
+
+def migrar_nombre_anterior() -> None:
+    """Trae la configuración y la sesión de cuando la app se llamaba "SAC Estados".
+
+    Así quien ya la usaba no tiene que configurar el servidor ni iniciar sesión otra vez.
+    """
+    if os.environ.get("GUMAMETER_CONFIG"):
+        return
+    try:
+        nueva = carpeta_config() / "config.json"
+        vieja = carpeta_config().with_name(NOMBRE_ANTERIOR) / "config.json"
+        if not nueva.exists() and vieja.exists():
+            nueva.parent.mkdir(parents=True, exist_ok=True)
+            nueva.write_bytes(vieja.read_bytes())
+    except OSError:
+        pass
+    try:
+        llavero = _llavero()
+        crudo = llavero.get_password(NOMBRE_ANTERIOR, _CUENTA)
+        if crudo:
+            if not llavero.get_password(_SERVICIO, _CUENTA):
+                llavero.set_password(_SERVICIO, _CUENTA, crudo)
+            llavero.delete_password(NOMBRE_ANTERIOR, _CUENTA)
+    except Exception:
+        pass
 
 
 # -- sesión (token) en el Administrador de credenciales ------------------------
