@@ -108,7 +108,7 @@ Iniciar sesión **no** cambia el estado: la app muestra el que devuelve el servi
 | **Cerrar sesión** (menú) | Llama al logout, borra el token guardado y vuelve a la ventana de inicio de sesión. | El servidor pasa al usuario a **Desconectado** de inmediato y revoca el token. |
 | **Salir** de la app (menú → Salir) | Pide confirmación y cierra el proceso. No cambia el estado ni cierra la sesión. | Sigue igual hasta que el servidor nota la falta de señal (3 minutos) y lo pasa a Desconectado. Al abrir la app de nuevo no pide contraseña. |
 | **Apagar o suspender la máquina** | Nada: deja de enviar señal. | Igual que salir: Desconectado a los 3 minutos. Al volver, la app muestra lo que diga el servidor; el usuario marca "En línea" cuando retome. |
-| **Sin conexión** | Ícono en gris con "Sin conexión"; reintenta cada 15 s. Nunca cambia el estado por su cuenta. | Si el corte pasa de 3 minutos, el servidor lo pasa a Desconectado y la app lo muestra al reconectar. |
+| **Sin conexión** | Ícono en gris con "Sin conexión"; reintenta cada 15 s. Sin confirmación del servidor el estado no cambia. | Si el corte pasa de 3 minutos, el servidor lo pasa a Desconectado y la app lo muestra al reconectar. |
 | **Iniciar sesión en otra PC** | La app es de sesión única: la PC anterior vuelve a la ventana de inicio de sesión con el aviso "Tu sesión se cerró porque este usuario inició sesión en otro equipo." (en su siguiente latido, como mucho un minuto). | Se conserva; lo sigue manteniendo la PC nueva. |
 | **Token vencido o revocado (401)** | Borra el token y vuelve a la ventana de inicio de sesión con un aviso. | Lo decide el servidor. |
 | **Usuario desactivado o sin rol SAC (403)** | Igual que el 401, mostrando el mensaje del servidor. | Lo decide el servidor. |
@@ -117,6 +117,26 @@ Iniciar sesión **no** cambia el estado: la app muestra el que devuelve el servi
 La señal de vida (latido) sale cada **60 segundos**. Su respuesta trae el estado vigente, así que un
 cambio hecho en el servidor (por ejemplo, desde el sistema web) aparece en el ícono en menos de un minuto.
 Al abrir el menú también se consulta el estado, para verlo al día.
+
+## Cambios automáticos por inactividad
+
+La app revisa cada 5 segundos cuánto tiempo lleva el equipo sin teclado ni mouse:
+
+| Situación | Qué hace la app |
+|---|---|
+| **En línea** y 7 minutos sin actividad | Pasa a **AFK** y lo avisa. |
+| Ese AFK automático y vuelve la actividad | Regresa sola a **En línea**. |
+| **En línea o AFK** y 25 minutos sin actividad | Pasa a **Desconectado** y lo avisa. La sesión de la app sigue abierta. |
+| Vuelve la actividad tras esa desconexión | Sigue en Desconectado y recuerda marcar **En línea** a mano. |
+
+- Un **AFK elegido a mano** no vuelve solo a En línea, pero sí pasa a Desconectado a los 25 minutos.
+- **Descanso** y **Desconectado** no se tocan.
+- Con el menú abierto no se hace ningún cambio automático.
+- El cambio sigue la regla de siempre: solo vale cuando el servidor lo confirma. Si falla, se reintenta a los 30 segundos.
+- El servidor guarda el motivo, y la Bitácora de Equipo SAC lo muestra como "Inactividad" o "Regreso automático".
+- Solo se detecta teclado y mouse: una llamada telefónica larga sin tocar el equipo cuenta como inactividad.
+
+Los umbrales están en `src/inactividad.py` (`UMBRAL_AFK`, `UMBRAL_OFF`).
 
 ## Uso de aplicaciones
 
@@ -153,7 +173,7 @@ Horas en `"AAAA-MM-DD HH:MM:SS"`, hora de Managua (UTC-6). Estados: `on`, `afk`,
 |---|---|---|
 | `POST /login` | `{ "username", "password", "dispositivo" }` | `{ "token", "usuario": { "id", "nombre", "username" }, "estado", "desde", "ahora" }` |
 | `GET /estado` | — | `{ "estado", "desde", "ahora" }` |
-| `POST /estado` | `{ "estado" }` | `{ "estado", "desde", "ahora" }` |
+| `POST /estado` | `{ "estado", "motivo"? }` (`motivo`: `inactividad` o `regreso`, solo en cambios automáticos) | `{ "estado", "desde", "ahora" }` |
 | `POST /latido` | — | `{ "estado", "desde", "ahora" }` |
 | `POST /logout` | — | `{ "ok": true }` |
 | `POST /uso` | `{ "apps": [{ "proceso", "nombre", "segundos" }], "inactivo" }` | `{ "ok": true }` |
@@ -171,6 +191,7 @@ src/
   main.py             arranque, hilo de trabajo y conexión entre las piezas
   api.py              cliente HTTP de la API (sin Qt)
   estado.py           lógica del estado: solo cambia si el servidor confirma (sin Qt)
+  inactividad.py      cambios automáticos a AFK y Desconectado por inactividad
   uso.py              medidor de uso de aplicaciones (programa en primer plano e inactividad)
   tray.py             ícono de bandeja y menú propio
   login_window.py     ventana de inicio de sesión

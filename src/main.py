@@ -15,6 +15,7 @@ import settings
 import theme
 from api import ClienteApi, ErrorApi, ErrorServidor, Sesion, SinConexion
 from estado import MSG_NO_GUARDADO, ControladorEstado
+from inactividad import ESPERA_TRAS_FALLO, MSG_AFK, MSG_OFF, MSG_SIGUES_OFF, Vigilante, segundos_sin_actividad
 from login_window import VentanaLogin
 from single_instance import InstanciaUnica
 from tray import Bandeja
@@ -36,6 +37,7 @@ class Trabajador(QObject):
     conexion_cambiada = Signal(bool)
     sesion_invalida = Signal(str)
     cambio_terminado = Signal(bool)
+    auto_terminado = Signal(str, bool)  # estado pedido, confirmado
     latido_terminado = Signal()
     logout_terminado = Signal()
     uso_terminado = Signal(bool, object)  # enviado, carga
@@ -74,6 +76,11 @@ class Trabajador(QObject):
     @Slot(str)
     def cambiar(self, estado: str) -> None:
         self.cambio_terminado.emit(bool(self.api.token) and self.ctrl.cambiar(estado))
+
+    @Slot(str, str)
+    def cambiar_auto(self, estado: str, motivo: str) -> None:
+        """Cambio automático por inactividad (o por volver a usar el equipo)."""
+        self.auto_terminado.emit(estado, bool(self.api.token) and self.ctrl.cambiar(estado, motivo))
 
     @Slot()
     def latido(self) -> None:
@@ -119,6 +126,7 @@ class Aplicacion(QObject):
     pedir_config = Signal(str, str)
     pedir_login = Signal(str, str, str)
     pedir_cambio = Signal(str)
+    pedir_cambio_auto = Signal(str, str)
     pedir_latido = Signal()
     pedir_refresco = Signal()
     pedir_logout = Signal()
@@ -141,6 +149,9 @@ class Aplicacion(QObject):
         self._estado: str | None = None
         self._conectado = False
         self.medidor = MedidorUso()
+        self.vigilante = Vigilante()
+        self._auto_en_curso = False
+        self._auto_pausa = 0  # muestras que faltan para reintentar un cambio automático fallido
 
         self.login = VentanaLogin()
         self.bandeja = Bandeja(self)
@@ -154,6 +165,8 @@ class Aplicacion(QObject):
         self.pedir_config.connect(t.configurar)
         self.pedir_login.connect(t.login)
         self.pedir_cambio.connect(t.cambiar)
+        self.pedir_cambio_auto.connect(t.cambiar_auto)
+        t.auto_terminado.connect(self._al_terminar_auto)
         self.pedir_latido.connect(t.latido)
         self.pedir_refresco.connect(t.refrescar)
         self.pedir_logout.connect(t.logout)
@@ -173,7 +186,7 @@ class Aplicacion(QObject):
         self.reloj.setInterval(LATIDO_MS)
         self.reloj.timeout.connect(self._latir)
 
-        # Uso de aplicaciones: una muestra cada pocos segundos, solo En línea o AFK
+        # Cada pocos segundos: muestra del uso de aplicaciones y revisión de inactividad
         self.reloj_uso = QTimer(self)
         self.reloj_uso.setInterval(PASO * 1000)
         self.reloj_uso.timeout.connect(self._muestrear)
@@ -218,6 +231,9 @@ class Aplicacion(QObject):
         self._estado = None
         self._conectado = False
         self.medidor.vaciar()
+        self.vigilante.manual()
+        self._auto_en_curso = False
+        self._auto_pausa = 0
         self.reloj.stop()
         settings.borrar_sesion()
         self.bandeja.menu.hide()
@@ -278,6 +294,7 @@ class Aplicacion(QObject):
     def _elegir_estado(self, clave: str) -> None:
         if not self.sesion:
             return
+        self.vigilante.manual()
         self.bandeja.menu.set_guardando(clave)
         self.pedir_cambio.emit(clave)
 
@@ -314,6 +331,35 @@ class Aplicacion(QObject):
         # Se mide en cualquier estado mientras haya sesión y el servidor esté al tanto.
         if self.sesion and self._conectado:
             self.medidor.muestrear()
+            self._vigilar()
+
+    def _vigilar(self) -> None:
+        """Pasa a AFK o a Desconectado por inactividad, y vuelve a En línea si el AFK fue automático."""
+        quieto = segundos_sin_actividad()
+        if self.vigilante.volvio_tras_desconexion(self._estado, quieto):
+            self.bandeja.notificar(MSG_SIGUES_OFF)
+        if self._auto_pausa > 0:
+            self._auto_pausa -= 1
+            return
+        if self._auto_en_curso or self.bandeja.menu.isVisible():
+            return  # con el menú abierto la persona está eligiendo: no se le cambia debajo
+        pedido = self.vigilante.decidir(self._estado, quieto)
+        if pedido:
+            self._auto_en_curso = True
+            self.pedir_cambio_auto.emit(*pedido)
+
+    def _al_terminar_auto(self, estado: str, confirmado: bool) -> None:
+        self._auto_en_curso = False
+        if not self.sesion:
+            return
+        if not confirmado:
+            self._auto_pausa = ESPERA_TRAS_FALLO // PASO
+            return
+        self.vigilante.confirmado(estado)
+        if estado == "afk":
+            self.bandeja.notificar(MSG_AFK, aviso=False)
+        elif estado == "off":
+            self.bandeja.notificar(MSG_OFF)
 
     def _al_terminar_uso(self, enviado: bool, carga: dict) -> None:
         if not enviado and self.sesion:

@@ -177,7 +177,12 @@ class Manejador(BaseHTTPRequestHandler):
                 nuevo = cuerpo.get("estado")
                 if nuevo not in ESTADOS:
                     return self._json(422, {"mensaje": "El estado no es válido."})
+                motivo = cuerpo.get("motivo")
+                if motivo not in (None, "inactividad", "regreso"):
+                    return self._json(422, {"mensaje": "El motivo no es válido."})
                 m.fijar(username, nuevo)["visto"] = time.monotonic()
+                if motivo:
+                    print(f"   {username}: {nuevo} ({motivo})")
             return self._json(200, m.respuesta(username))
 
     def _login(self, cuerpo: dict) -> None:

@@ -3,7 +3,7 @@
 Solo se registra el **nombre del programa** (p. ej. ``chrome.exe`` / "Google Chrome") y los
 segundos. Nunca títulos de ventana, páginas visitadas, teclas ni capturas de pantalla.
 
-La app toma una muestra cada ``PASO`` segundos mientras el usuario está En línea o AFK, la
+La app toma una muestra cada ``PASO`` segundos mientras hay sesión iniciada (en cualquier estado), la
 acumula aquí y la envía al servidor junto con el latido (``POST /api/sac/uso``).
 """
 
@@ -12,6 +12,8 @@ from __future__ import annotations
 import os
 import sys
 from typing import Callable
+
+from inactividad import segundos_sin_actividad
 
 PASO = 5  # segundos entre muestras
 UMBRAL_INACTIVO = 300  # sin teclado ni mouse por 5 min = "sin actividad"
@@ -99,14 +101,7 @@ def lectura_windows() -> Lectura:
 
     user32, kernel32 = ctypes.windll.user32, ctypes.windll.kernel32
 
-    class LASTINPUTINFO(ctypes.Structure):
-        _fields_ = [("cbSize", wintypes.UINT), ("dwTime", wintypes.DWORD)]
-
-    info = LASTINPUTINFO()
-    info.cbSize = ctypes.sizeof(info)
-    quieto = 0.0
-    if user32.GetLastInputInfo(ctypes.byref(info)):
-        quieto = ((kernel32.GetTickCount() - info.dwTime) & 0xFFFFFFFF) / 1000.0
+    quieto = segundos_sin_actividad()
 
     user32.GetForegroundWindow.restype = wintypes.HWND
     ventana = user32.GetForegroundWindow()

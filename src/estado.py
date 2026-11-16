@@ -1,8 +1,8 @@
 """Lógica del estado del usuario, sin Qt.
 
 Regla central: el estado local **solo** cambia cuando el servidor lo confirma.
-Si una llamada falla, el estado queda como estaba; la app nunca lo cambia por
-su cuenta.
+Si una llamada falla, el estado queda como estaba. Los cambios automáticos por
+inactividad (``inactividad.py``) pasan por aquí igual que los manuales.
 """
 
 from __future__ import annotations
@@ -88,9 +88,12 @@ class ControladorEstado:
         self.desde = None
         self.conectado = None
 
-    def cambiar(self, nuevo: str) -> bool:
-        """Pide el cambio al servidor. Devuelve True solo si lo confirmó."""
-        return self._llamar(lambda: self.api.cambiar_estado(nuevo))
+    def cambiar(self, nuevo: str, motivo: str | None = None) -> bool:
+        """Pide el cambio al servidor. Devuelve True solo si lo confirmó.
+
+        ``motivo`` marca los cambios automáticos por inactividad (ver ``inactividad.py``).
+        """
+        return self._llamar(lambda: self.api.cambiar_estado(nuevo, motivo))
 
     def latido(self) -> bool:
         """Señal de vida. Si el servidor cambió el estado, lo refleja."""

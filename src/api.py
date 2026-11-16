@@ -173,8 +173,12 @@ class ClienteApi:
     def obtener_estado(self) -> EstadoRemoto:
         return _estado_remoto(self._pedir("GET", "/estado"))
 
-    def cambiar_estado(self, estado: str) -> EstadoRemoto:
-        return _estado_remoto(self._pedir("POST", "/estado", json={"estado": estado}))
+    def cambiar_estado(self, estado: str, motivo: str | None = None) -> EstadoRemoto:
+        """``motivo`` solo va en los cambios automáticos: "inactividad" o "regreso"."""
+        cuerpo = {"estado": estado}
+        if motivo:
+            cuerpo["motivo"] = motivo
+        return _estado_remoto(self._pedir("POST", "/estado", json=cuerpo))
 
     def latido(self) -> EstadoRemoto:
         return _estado_remoto(self._pedir("POST", "/latido"))
